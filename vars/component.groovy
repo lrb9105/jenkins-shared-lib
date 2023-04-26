@@ -112,7 +112,7 @@ def deleteCurrentAmi(String amiName, String awsRegion){
                     --region=${awsRegion};
         
                 for SNAPSHOT_ID in \$SNAPSHOT_IDS; do
-                    echo \"Deleting snapshot ID $SNAPSHOT_ID\"
+                    echo \"Deleting snapshot ID \$SNAPSHOT_ID\"
                     aws ec2 delete-snapshot \
                         --snapshot-id \$SNAPSHOT_ID \
                         --region=${awsRegion};
