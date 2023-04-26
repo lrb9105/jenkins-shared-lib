@@ -149,6 +149,8 @@ def createNewAmiAndAutoScalingUpdate(String awsRegion, String envName, String ve
                 --environment-name ${envName} \
                 --option-settings Namespace=aws:autoscaling:launchconfiguration,OptionName=ImageId,Value=\$NEW_AMI_ID \
                 --region ${awsRegion} \
+                --timeout 10 \
+                --max-attempts 5 \
                 --version-label ${versionLabel} 
            """
 
