@@ -37,7 +37,7 @@ def pushDockerImageToEcr(String keyChainPw, String awsRegion, String ecrReposito
              accessKeyVariable: "AWS_ACCESS_KEY_ID",
              secretKeyVariable: "AWS_SECRET_ACCESS_KEY"
      ]]) {
-        sh 'security unlock-keychain -p "${keyChainPw}" "/Users/jenkins/Library/Keychains/jenkins.keychain-db"'
+        sh "security unlock-keychain -p ${keyChainPw} '/Users/jenkins/Library/Keychains/jenkins.keychain-db'"
         sh "aws ecr get-login-password --region ${awsRegion} | docker login --username AWS --password-stdin ${ecrRepositoryAddress}"
 
         //Push the Docker image to ECR
@@ -61,13 +61,13 @@ def deployToElasticBeanstalk(String awsRegion, String appName, String envName, S
                 --region ${awsRegion} \
                 --application-name ${appName} \
                 --version-label ${versionLabel} \
-                --source-bundle S3Bucket="${s3Bucket}",S3Key="${s3Key}"
+                --source-bundle S3Bucket=${s3Bucket},S3Key=${s3Key}
             """
 
         sh  """
             aws elasticbeanstalk describe-application-versions \
                 --application-name ${appName} \
-                --version-labels "${versionLabel}" \
+                --version-labels ${versionLabel} \
                 --query "ApplicationVersions[0].Status"
             """
 
