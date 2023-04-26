@@ -1,5 +1,6 @@
 def checkout(String gitRepoName, String gitRepoUrl) {
     echo 'Download ${gitRepoName} from gitlab'
+
     checkout([$class: 'GitSCM',
               branches: [[name: '*/main']],
               doGenerateSubmoduleConfigurations: false,
@@ -12,38 +13,37 @@ def checkout(String gitRepoName, String gitRepoUrl) {
 
 def createJar(String jarName){
     echo 'create jar ${jarName}'
+
     sh 'mvn package -Dmaven.test.skip -DoutputDirectory=.'
     sh 'mv target/${jarName} ./${jarName}'
 }
 
 def buildDockerImage(String nodeName, String sudoPw, String ecrRepositoryName){
     echo 'Build Docker Image'
-    script {
-        if("${nodeName}" == "office-ryeong-macstudio") { //office-ryeong-macstudio
-            sh 'echo "${sudoPw}" | sudo -S docker buildx build --platform=linux/amd64 -t ${ecrRepositoryName} . '
-        } else { //intel office
-            sh 'docker buildx build --platform=linux/amd64 -t ${ecrRepositoryName} . '
-        }
+
+    if("${nodeName}" == "office-ryeong-macstudio") { //office-ryeong-macstudio
+        sh 'echo "${sudoPw}" | sudo -S docker buildx build --platform=linux/amd64 -t ${ecrRepositoryName} . '
+    } else { //intel office
+        sh 'docker buildx build --platform=linux/amd64 -t ${ecrRepositoryName} . '
     }
 }
 
 def pushDockerImageToEcr(String keyChainPw, String awsRegion, String ecrRepositoryAddress, String ecrRepositoryUrl, String ecrRepositoryName, String dockerImageTag){
-    script {
-        echo 'Push Docker Image to ECR'
-        withCredentials([[
-                 $class           : 'AmazonWebServicesCredentialsBinding',
-                 credentialsId    : 'aws-jenkins-eb',
-                 accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                 secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-         ]]) {
-            sh 'security unlock-keychain -p "${keyChainPw}" "/Users/jenkins/Library/Keychains/jenkins.keychain-db"'
-            sh 'aws ecr get-login-password --region ${awsRegion} | docker login --username AWS --password-stdin ${ecrRepositoryAddress}'
+    echo 'Push Docker Image to ECR'
 
-            //Push the Docker image to ECR
-            docker.withRegistry("${ecrRepositoryUrl}")
-            {
-                docker.image("${ecrRepositoryName}:${dockerImageTag}").push()
-            }
+    withCredentials([[
+             $class           : 'AmazonWebServicesCredentialsBinding',
+             credentialsId    : 'aws-jenkins-eb',
+             accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+             secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+     ]]) {
+        sh 'security unlock-keychain -p "${keyChainPw}" "/Users/jenkins/Library/Keychains/jenkins.keychain-db"'
+        sh 'aws ecr get-login-password --region ${awsRegion} | docker login --username AWS --password-stdin ${ecrRepositoryAddress}'
+
+        //Push the Docker image to ECR
+        docker.withRegistry("${ecrRepositoryUrl}")
+        {
+            docker.image("${ecrRepositoryName}:${dockerImageTag}").push()
         }
     }
 }
