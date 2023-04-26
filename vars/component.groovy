@@ -37,7 +37,7 @@ def pushDockerImageToEcr(String keyChainPw, String awsRegion, String ecrReposito
              accessKeyVariable: "AWS_ACCESS_KEY_ID",
              secretKeyVariable: "AWS_SECRET_ACCESS_KEY"
      ]]) {
-        sh "security unlock-keychain -p "${keyChainPw}" "/Users/jenkins/Library/Keychains/jenkins.keychain-db""
+        sh 'security unlock-keychain -p "${keyChainPw}" "/Users/jenkins/Library/Keychains/jenkins.keychain-db"'
         sh "aws ecr get-login-password --region ${awsRegion} | docker login --username AWS --password-stdin ${ecrRepositoryAddress}"
 
         //Push the Docker image to ECR
