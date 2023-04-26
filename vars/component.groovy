@@ -89,36 +89,36 @@ def deleteCurrentAmi(String amiName, String awsRegion){
              accessKeyVariable: "AWS_ACCESS_KEY_ID",
              secretKeyVariable: "AWS_SECRET_ACCESS_KEY"
      ]]) {
-        sh '''
+        sh """
             # Get the list of AMI IDs
-            AMI_IDS=$(aws ec2 describe-images \
-                --filters "Name=name,Values=${amiName}" "Name=state,Values=available" "Name=is-public,Values=false" \
-                --query "Images[*].{ID:ImageId}" \
-                --region=${awsRegion} \
+            AMI_IDS=\$(aws ec2 describe-images \
+                --filters \"Name=name,Values=\${amiName}\" \"Name=state,Values=available\" \"Name=is-public,Values=false\" \
+                --query \"Images[*].{ID:ImageId}\" \
+                --region=\${awsRegion} \
                 --output text)
-            
+        
             # Deregister each AMI and remove the associated snapshots
-            for AMI_ID in $AMI_IDS; do
-                echo "Deregistering AMI ID $AMI_ID"
-                SNAPSHOT_IDS=$(aws ec2 describe-images \
-                    --image-ids $AMI_ID \
-                    --filters "Name=is-public,Values=false" \
-                    --query "Images[*].BlockDeviceMappings[*].Ebs.SnapshotId" \
-                    --region=${awsRegion} \
+            for AMI_ID in \$AMI_IDS; do
+                echo \"Deregistering AMI ID \$AMI_ID\"
+                SNAPSHOT_IDS=\$(aws ec2 describe-images \
+                    --image-ids \$AMI_ID \\
+                    --filters \"Name=is-public,Values=false\" \
+                    --query \"Images[*].BlockDeviceMappings[*].Ebs.SnapshotId\" \
+                    --region=\${awsRegion} \\
                     --output text)
-
+        
                 aws ec2 deregister-image \
-                    --image-id $AMI_ID \
-                    --region=${awsRegion};
-                    
-                for SNAPSHOT_ID in $SNAPSHOT_IDS; do
-                    echo "Deleting snapshot ID $SNAPSHOT_ID"
+                    --image-id \$AMI_ID \
+                    --region=\${awsRegion};
+        
+                for SNAPSHOT_ID in \$SNAPSHOT_IDS; do
+                    echo \"Deleting snapshot ID \$SNAPSHOT_ID\"
                     aws ec2 delete-snapshot \
-                        --snapshot-id $SNAPSHOT_ID \
-                        --region=${awsRegion};
+                        --snapshot-id \$SNAPSHOT_ID \
+                        --region=\${awsRegion};
                 done
             done
-           '''
+        """
     }
 }
 
@@ -129,28 +129,28 @@ def createNewAmiAndAutoScalingUpdate(String awsRegion, String envName, String ve
              accessKeyVariable: "AWS_ACCESS_KEY_ID",
              secretKeyVariable: "AWS_SECRET_ACCESS_KEY"
      ]]) {
-        sh '''
-            EC2_ID=$(aws elasticbeanstalk describe-environment-resources \
+        sh """
+            EC2_ID=\$(aws elasticbeanstalk describe-environment-resources \
                         --environment-name ${envName} \
-                        --query "EnvironmentResources.Instances[*].Id" \
+                        --query \"EnvironmentResources.Instances[*].Id\" \
                         --region=${awsRegion} \
                         --output text)
 
-            NEW_AMI_ID=$(aws ec2 create-image \
-                --instance-id $EC2_ID \
+            NEW_AMI_ID=\$(aws ec2 create-image \
+                --instance-id \$EC2_ID \
                 --name ${amiName} \
                 --region=${awsRegion} \
                 --no-reboot \
                 --output text)
                 
-            echo "NEW_AMI_ID: $NEW_AMI_ID"
+            echo "NEW_AMI_ID: \$NEW_AMI_ID"
             
             aws elasticbeanstalk update-environment \
                 --environment-name ${envName} \
-                --option-settings Namespace=aws:autoscaling:launchconfiguration,OptionName=ImageId,Value=$NEW_AMI_ID \
+                --option-settings Namespace=aws:autoscaling:launchconfiguration,OptionName=ImageId,Value=\$NEW_AMI_ID \
                 --region ${awsRegion} \
                 --version-label ${versionLabel} 
-           '''
+           """
 
         sh "aws elasticbeanstalk wait environment-updated --environment-name ${envName}"
     }
