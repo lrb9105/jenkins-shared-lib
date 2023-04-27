@@ -153,7 +153,8 @@ def createNewAmiAndAutoScalingUpdate(String awsRegion, String envName, String ve
             echo "NEW_AMI_ID: \$NEW_AMI_ID"
 
             aws ec2 wait image-available \
-                --image-ids \$NEW_AMI_ID
+                --image-ids \$NEW_AMI_ID \
+                --region=${awsRegion}
                             
             aws elasticbeanstalk update-environment \
                 --environment-name ${envName} \
