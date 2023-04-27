@@ -18,6 +18,13 @@ def createJar(String jarName){
     sh "mv target/${jarName} ./${jarName}"
 }
 
+def createJarUsingGradle(String jarName){
+    echo "create jar ${jarName}"
+
+    sh "./gradlew build"
+    sh "mv build/libs/${jarName} ./${jarName}"
+}
+
 def buildDockerImage(String nodeName, String sudoPw, String ecrRepositoryName){
     echo "Build Docker Image"
 
