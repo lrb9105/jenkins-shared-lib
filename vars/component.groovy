@@ -129,7 +129,7 @@ def deleteCurrentAmi(String amiName, String awsRegion){
     }
 }
 
-def createNewAmiAndAutoScalingUpdate(String appName, String awsRegion, String envName, String versionLabel, String amiName){
+def createNewAmiAndAutoScalingUpdate(String awsRegion, String envName, String versionLabel, String amiName){
     withCredentials([[
              $class: "AmazonWebServicesCredentialsBinding",
              credentialsId: "aws-jenkins-eb",
@@ -159,34 +159,6 @@ def createNewAmiAndAutoScalingUpdate(String appName, String awsRegion, String en
                 --version-label ${versionLabel} 
            """
 
-        waitForEnvironment("${appName}","${envName}", 900)
+        //sh "aws elasticbeanstalk wait environment-updated --environment-name ${envName}"
     }
-}
-
-def waitForEnvironment(applicationName, environmentName, timeoutSeconds) {
-    def sleepTimeSeconds = 10
-    def maxIterationsCount = timeoutSeconds / sleepTimeSeconds
-    def iterations = 0
-    println "Waiting for a maximum of ${timeoutSeconds} seconds for ${environmentName} to become ready"
-    def status = getStatus(applicationName, environmentName)
-    while (status != "Ready" && iterations < maxIterationsCount) {
-        println status
-        sleep(sleepTimeSeconds * 1000)
-        status = getStatus(applicationName, environmentName)
-        iterations++
-    }
-    if (status == "Ready") {
-        println "Environment update completed successfully."
-    } else {
-        println "Environment update did not complete within the timeout period."
-    }
-}
-
-def getStatus(applicationName, environmentName) {
-    def cmd = "aws elasticbeanstalk describe-environments --application-name ${applicationName} --environment-name ${environmentName}"
-    def process = cmd.execute()
-    def output = process.text
-    process.waitFor()
-    def status = output.readLines().collect { it as Map }.findResult { it.Environments?.first()?.Status }
-    return status
 }
