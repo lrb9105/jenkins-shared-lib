@@ -11,6 +11,19 @@ def checkout(String gitRepoName, String gitRepoUrl) {
     ])
 }
 
+def checkoutWithBranchName(String gitRepoName, String branchName, String gitRepoUrl) {
+    echo "Download ${gitRepoName} from gitlab"
+
+    checkout([$class: "GitSCM",
+              branches: [[name: "*/${branchName}"]],
+              doGenerateSubmoduleConfigurations: false,
+              extensions: [[$class: 'CleanCheckout'], lfs(), [$class: "LocalBranch", localBranch: "**"]],
+              submoduleCfg: [],
+              userRemoteConfigs: [[credentialsId: "sshkey_for_gitlab",
+                                   url: "${gitRepoUrl}"]]
+    ])
+}
+
 def createJar(String jarName){
     echo "create jar ${jarName}"
 
